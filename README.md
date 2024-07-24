@@ -680,6 +680,62 @@ That's it! You've successfully installed and set up Grafana to work with Prometh
 
 In this phase, you'll set up a Kubernetes cluster with node groups. This will provide a scalable environment to deploy and manage your applications.
 
+1. Change context
+
+```bash
+aws eks update-kubeconfig --name Netflix --region us-east-1
+```
+
+2. Check available pods created in eks cluster
+
+```bash
+kubectl get pods
+```
+
+### Deploy Application with ArgoCD
+
+To deploy an application with ArgoCD, you can follow these steps, which I'll outline in Markdown format:
+
+1. **Install ArgoCD:**
+
+   You can install ArgoCD on your Kubernetes cluster by following the instructions provided in the [EKS Workshop](https://archive.eksworkshop.com/intermediate/290_argocd/install/) documentation.
+   
+1) First, create a namespace
+$ kubectl create namespace argocd
+
+2) Next, let's apply the yaml configuration files for ArgoCd
+$ kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+3) Next, expose argocd-server
+$ kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
+
+4) Export ARGOCD_SERVER
+$ export ARGOCD_SERVER=`kubectl get svc argocd-server -n argocd -o json | jq --raw-output '.status.loadbalancer.ingress[0].hostname'`
+
+$ export ARGO_PWD=`kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath={.data.password}" | base64 -d`
+
+2. **Set Your GitHub Repository as a Source:**
+
+   After installing ArgoCD, you need to set up your GitHub repository as a source for your application deployment. This typically involves configuring the connection to your repository and defining the source for your ArgoCD application. The specific steps will depend on your setup and requirements.
+
+3. **Create an ArgoCD Application:**
+   - `name`: Set the name for your application.
+   - `destination`: Define the destination where your application should be deployed.
+   - `project`: Specify the project the application belongs to.
+   - `source`: Set the source of your application, including the GitHub repository URL, revision, and the path to the application within the repository.
+   - `syncPolicy`: Configure the sync policy, including automatic syncing, pruning, and self-healing.
+
+4. **Access your Application**
+   - To Access the app make sure port 30007 is open in your security group and then open a new tab paste your NodeIP:30007, your app should be running.
+
+## Install Helm
+
+You can install Helm on your local machine by following the instructions provided in the [Helm Docs](https://helm.sh/docs/intro/install/) documentation.
+
+1. Download your desired version
+2. Unpack it (tar -zxvf helm-v3.15.3-linux-amd64.tar.gz)
+3. Find the helm binary in the unpacked directory, and move it to its desired destination (sudo mv linux-amd64/helm /usr/local/bin/helm)
+
 ## Monitor Kubernetes with Prometheus
 
 Prometheus is a powerful monitoring and alerting toolkit, and you'll use it to monitor your Kubernetes cluster. Additionally, you'll install the node exporter using Helm to collect metrics from your cluster nodes.
@@ -710,39 +766,21 @@ Add a Job to Scrape Metrics on nodeip:9001/metrics in prometheus.yml:
 
 Update your Prometheus configuration (prometheus.yml) to add a new job for scraping metrics from nodeip:9001/metrics. You can do this by adding the following configuration to your prometheus.yml file:
 
-
 ```
   - job_name: 'Netflix'
     metrics_path: '/metrics'
     static_configs:
-      - targets: ['node1Ip:9100']
+      - targets: ['<node1Ip>:9100']
 ```
 
 Replace 'your-job-name' with a descriptive name for your job. The static_configs section specifies the targets to scrape metrics from, and in this case, it's set to nodeip:9001.
 
 Don't forget to reload or restart Prometheus to apply these changes to your configuration.
 
-To deploy an application with ArgoCD, you can follow these steps, which I'll outline in Markdown format:
+```
+$ curl -X POST http://localhost:9090/-/reload
+```
 
-### Deploy Application with ArgoCD
-
-1. **Install ArgoCD:**
-
-   You can install ArgoCD on your Kubernetes cluster by following the instructions provided in the [EKS Workshop](https://archive.eksworkshop.com/intermediate/290_argocd/install/) documentation.
-
-2. **Set Your GitHub Repository as a Source:**
-
-   After installing ArgoCD, you need to set up your GitHub repository as a source for your application deployment. This typically involves configuring the connection to your repository and defining the source for your ArgoCD application. The specific steps will depend on your setup and requirements.
-
-3. **Create an ArgoCD Application:**
-   - `name`: Set the name for your application.
-   - `destination`: Define the destination where your application should be deployed.
-   - `project`: Specify the project the application belongs to.
-   - `source`: Set the source of your application, including the GitHub repository URL, revision, and the path to the application within the repository.
-   - `syncPolicy`: Configure the sync policy, including automatic syncing, pruning, and self-healing.
-
-4. **Access your Application**
-   - To Access the app make sure port 30007 is open in your security group and then open a new tab paste your NodeIP:30007, your app should be running.
 
 **Phase 7: Cleanup**
 
