@@ -38,7 +38,6 @@
 - Set up Docker on the EC2 instance:
     
     ```bash
-    
     sudo apt-get update
     sudo apt-get install docker.io -y
     sudo usermod -aG docker $USER  # Replace with your system's username, e.g., 'ubuntu'
@@ -61,7 +60,7 @@ It will show an error cause you need API key
 
 **Step 4: Get the API Key:**
 
-- Open a web browser and navigate to TMDB (The Movie Database) website.
+- Open a web browser and navigate to TMDB (The Movie Database) website (https://www.themoviedb.org/).
 - Click on "Login" and create an account.
 - Once logged in, go to your profile and select "Settings."
 - Click on "API" from the left-side panel.
@@ -161,7 +160,7 @@ Goto Manage Jenkins → Tools → Install JDK(17) and NodeJs(16)→ Click on App
 
 Create the token
 
-Goto Jenkins Dashboard → Manage Jenkins → Credentials → Add Secret Text. It should look like this
+Goto Jenkins Dashboard → Manage Jenkins → Credentials → Add Secret Text.
 
 After adding sonar token
 
@@ -268,7 +267,6 @@ Certainly, here are the instructions without step numbers:
 Now, you have installed the Dependency-Check plugin, configured the tool, and added Docker-related plugins along with your DockerHub credentials in Jenkins. You can now proceed with configuring your Jenkins pipeline to include these tools and credentials in your CI/CD process.
 
 ```groovy
-
 pipeline{
     agent any
     tools{
@@ -325,33 +323,32 @@ pipeline{
                 script{
                    withDockerRegistry(credentialsId: 'docker', toolName: 'docker'){   
                        sh "docker build --build-arg TMDB_V3_API_KEY=<yourapikey> -t netflix ."
-                       sh "docker tag netflix nasi101/netflix:latest "
-                       sh "docker push nasi101/netflix:latest "
+                       sh "docker tag netflix don361/netflix:latest "
+                       sh "docker push don361/netflix:latest "
                     }
                 }
             }
         }
         stage("TRIVY"){
             steps{
-                sh "trivy image nasi101/netflix:latest > trivyimage.txt" 
+                sh "trivy image don361/netflix:latest > trivyimage.txt" 
             }
         }
         stage('Deploy to container'){
             steps{
-                sh 'docker run -d --name netflix -p 8081:80 nasi101/netflix:latest'
+                sh 'docker run -d --name netflix -p 8081:80 don361/netflix:latest'
             }
         }
     }
 }
+```
 
+**If you get docker login failed errorr**
 
-If you get docker login failed errorr
-
+```bash
 sudo su
 sudo usermod -aG docker jenkins
 sudo systemctl restart jenkins
-
-
 ```
 
 **Phase 4: Monitoring**
